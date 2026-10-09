@@ -1,0 +1,17 @@
+#!/bin/sh
+# Git pre-commit: .env va secret leak tekshiruvi
+# O'rnatish: cp scripts/githooks/pre-commit .git/hooks/pre-commit
+
+set -e
+
+cd "$(git rev-parse --show-toplevel)"
+
+for file in .env .env.local .env.development .env.staging .env.production; do
+  if git diff --cached --name-only -- "$file" | grep -q .; then
+    echo "✗ XAVFSIZLIK: $file commit qilinmoqchi — bekor qiling."
+    echo "  git reset HEAD -- $file"
+    exit 1
+  fi
+done
+
+npm run env:check-secrets --silent

@@ -1,0 +1,10 @@
+# Local env fayllar — git/ZIP ga kirmasligi kerak
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Arxiv / backup
+*.env.backup
+*.env.bak
+.envrc

@@ -1,0 +1,11 @@
+[Unit]
+Description=TAVFIQ PostgreSQL dump
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/tavfiq
+EnvironmentFile=/var/www/tavfiq/.env
+ExecStart=/bin/bash /var/www/tavfiq/scripts/backup-postgres.sh
+User=www-data
+Group=www-data

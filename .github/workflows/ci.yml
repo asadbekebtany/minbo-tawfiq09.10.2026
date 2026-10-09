@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint, Prisma & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tavfiq
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tavfiq"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_ENV: development
+      NEXT_PUBLIC_APP_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tavfiq?schema=public
+      NEXTAUTH_SECRET: ci-github-actions-build-secret-placeholder-32
+      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: TAVFIQ
+      LOCK_ADMIN_API: "false"
+      OTP_DEMO_CODES: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Env xavfsizlik tekshiruvi
+        run: npm run env:check-secrets
+
+      - name: Env validatsiya
+        run: npm run env:validate
+
+      - name: Prisma schema validatsiya
+        run: npm run db:validate
+
+      - name: Migration fayllari (offline)
+        run: npm run db:migrate:check-offline
+
+      - name: Prisma client generatsiya
+        run: npx prisma generate
+
+      - name: Migration deploy va drift tekshiruvi
+        run: |
+          npx prisma migrate deploy
+          npx prisma migrate status
+          npx prisma migrate diff \
+            --from-url "$DATABASE_URL" \
+            --to-schema-datamodel prisma/schema.prisma \
+            --exit-code
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_PHASE: phase-production-build

@@ -1,0 +1,21 @@
+[Unit]
+Description=TAVFIQ marketplace (Next.js)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/tavfiq
+EnvironmentFile=/var/www/tavfiq/.env
+Environment=NODE_ENV=production
+Environment=APP_ENV=production
+ExecStartPre=/usr/bin/node /var/www/tavfiq/scripts/ensure-runtime-dirs.mjs
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=30
+User=www-data
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

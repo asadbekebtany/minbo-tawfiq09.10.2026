@@ -1,0 +1,3 @@
+# TAVFIQ VPS crontab (ixtiyoriy, systemd timer o‘rniga)
+# 0 3 * * * DATABASE_URL='postgresql://...' /bin/bash /var/www/tavfiq/scripts/backup-postgres.sh
+15 3 * * * /usr/bin/systemctl start tavfiq-backup.service
